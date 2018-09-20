@@ -41,7 +41,7 @@ def main():
 
   # Depending on the query we are interested in, we append the necessary string
   # As you read through the twitter API, you'll find more possibilities
-  req_url = base_url + page + '?q="Hanover+College"&tweet_mode=extended&count=100'
+  req_url = base_url + page + '?q=Hanover+College&tweet_mode=extended&count=100'
 
   # We perform a request. Contains standard HTTP information
   response = oauth.get(req_url)
@@ -66,6 +66,7 @@ def main():
 
   ## CAUTION: For the rest of this assignment, the list "tweets" contains all the
   ## tweets you would want to work with. Do NOT change the list or the value of "tweets".
+  print("Found", len(tweets), "tweets")
 
   # 1
   tweets_text = [get_full_text(tweet) for tweet in tweets]
@@ -83,21 +84,19 @@ def main():
       else:
         hashtags[tag] = 1
 
-  # 5
-  print_common_hastags(hashtags, 5)
-
   # 7
   orig_tweets = [tweet for tweet in tweets if not 'retweeted_status' in tweet]
   tag_info = {}
   for tag in hashtags:
     tag_dict = {}
-    tag_dict['count'] = 0
+    tag_dict['count'] = hashtags[tag]
+    tag_dict['percent'] = hashtags[tag] / len(tweets)
     tag_dict['users'] = []
     tag_dict['other_tags'] = []
+    
     for tweet in orig_tweets:
       loc_tags = get_hashtag_list(tweet)
       if tag in loc_tags:
-        tag_dict['count'] += 1
         name = tweet['user']['screen_name']
         if not name in tag_dict['users']:
           tag_dict['users'].append(name)
@@ -124,9 +123,8 @@ def main():
   with open('simpler_tweets.json', 'w') as f:
     json.dump(simpler_tweets, f)
 
-
-
-
+  # 5
+  print_common_hastags(hashtags, 6)
 
 
 # 2
@@ -137,7 +135,8 @@ def get_full_text(tweet):
 
 def get_hashtag_list(tweet):
   tags = []
-  for tag in tweet['entities']['hashtags']:
+  for tag_dict in tweet['entities']['hashtags']:
+    tag = tag_dict['text'].lower()
     if not tag in tags:
       tags.append(tag)
   return tags
