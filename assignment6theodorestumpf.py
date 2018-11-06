@@ -2,6 +2,7 @@
 import requests, json, re
 from pprint import pprint
 from bs4 import BeautifulSoup
+import os.path
 
 # The following function takes as input a full URL.
 # It returns a BeautifulSoup object representing that web page's contents
@@ -61,6 +62,7 @@ allLanguages = [
 clang = [lang for lang in allLanguages
          if lang['name'] == 'C'][0]
 #-- print(clang)
+print("Exercise 3 Test:", clang['name'] == 'C')
 
 ################################################################
 ## Exercise 4
@@ -68,14 +70,12 @@ def getSidebar(lang):
    langContents = getPage(baseUrl + lang['link'])
    if langContents is None:
       return None
-   return langContents.find(lambda x: x.name == 'tbody' and 
-      (x.find('a', {'title': 'Software developer'}) != None or 
-       x.find('a', {'title': 'Software design'}) != None))
+   return langContents.find('table', {'class': 'infobox'})
 
 ## If you have done this correctly, then getSidebar(clang) should
 ## return the sidebar of the C language's page
 cSidebar = getSidebar(clang)
-#-- print(cSidebar)
+#-- print(cSidebar) #--
 
 ################################################################
 ## Exercise 5. You do not have to write any code.
@@ -83,37 +83,33 @@ cSidebar = getSidebar(clang)
 ## add comments above them and possibly inline, to explain what
 ## the functions do.
 
-#  Returns the text of a list of languages
+#  Returns a list of the text from an element
 def getAnchorTexts(contents):
    return [
       anchor.get_text().lower()
       for anchor in contents.find_all("a", { 'href': re.compile("/wiki/(?!#cite)") })
    ]
 
-#  Returns the links of a list of languages
+#  Returns a list of the links from an element
 def getAnchorLinks(contents):
    return [
       anchor.attrs['href']
       for anchor in contents.find_all("a", { 'href': re.compile("/wiki/(?!Category:|Wikipedia:|#cite)") })
    ]
 
-#  Expands the entry for a language
+#  Updates the language with more detail
 def enrichLangEntry(lang):
    lang["paradigms"] = []
    lang["typeDiscipline"] = []
    lang["influenced"] = []
    lang["influencedBy"] = []
    sidebar = getSidebar(lang)
-   print('\n', lang['name'])
    if sidebar is None:
       return None
    for rowHeading in sidebar.find_all("th"):
       rowHeadingText = rowHeading.get_text().lower()
-      print(rowHeadingText)
-
-      rowContents = rowHeading.next_sibling.next_sibling
-      nextRow = rowHeading.parent.next_sibling.next_sibling
-
+      rowContents = rowHeading.next_sibling     #.next_sibling  -- Had to remove these two parts
+      nextRow = rowHeading.parent.next_sibling  #.next_sibling
       if rowHeadingText == "paradigm":
          lang["paradigms"] = getAnchorTexts(rowContents)
       elif rowHeadingText == "typing discipline":
@@ -123,36 +119,54 @@ def enrichLangEntry(lang):
       elif rowHeadingText == "influenced by":
          lang["influencedBy"] = getAnchorLinks(nextRow)
 
-## This line will take a while to execute, as it reads all pages for all languages
-#i = 0
-#for lang in allLanguages[50:100]:
-#   enrichLangEntry(lang)
-#   i += 1
-#   print(i)
-enrichLangEntry(clang)
+
+if os.path.exists('data.txt'):
+   #  Load data if it exists
+   f = open('data.txt', 'r')
+   allLanguages = eval(f.read())
+   f.close()
+else:
+   ## This line will take a while to execute, as it reads all pages for all languages
+   i = 0
+   for lang in allLanguages:
+      enrichLangEntry(lang)
+      i += 1
+      print("Enriching Languages ", round(100 * (i / len(allLanguages)), 1), "%", sep = "")
 
 ## If you have done these correctly, the following line should print for you
 ## the appropriate information for the C language
-pprint(clang)
+#-- pprint(clang)
+print("Exercise 5 Test: ", 'paradigms' in list(clang.keys()))
 
 #################################################################
-### Exercise 6
-#allLangDict = {}
-### Add your steps here
-#
-### If you've done this correctly, the following should give you back the C language:
-#allLangDict['/wiki/C_(programming_language)']
-#
+## Exercise 6
+allLangDict = {}
+## Add your steps here
+for lang in allLanguages:
+   allLangDict[lang['link']] = lang
+
+## If you've done this correctly, the following should give you back the C language:
+all_c = allLangDict['/wiki/C_(programming_language)']
+print("Exercise 6 Test:", clang == all_c)
+
 #################################################################
-### Exercise 7
-#missingLanguages = {}
-#for lang in allLanguages:
-#   pass
-#   ## Add your work here
-#
-### If you've done this correctly, the following should return 177 languages
-#len(missingLanguages)
-#
+## Exercise 7
+missingLanguages = []
+for lang in allLanguages:
+   if 'influenced' in lang.keys():
+      for l in lang['influenced']:
+         if not l in allLangDict.keys():
+            missingLanguages.append(l)
+   if 'influencedBy' in lang.keys():
+      for l in lang['influencedBy']:
+         if not l in allLangDict.keys():
+            missingLanguages.append(l)
+   ## Add your work here
+
+## If you've done this correctly, the following should return 177 languages
+print(len(missingLanguages))
+pprint(missingLanguages)
+
 #################################################################
 ### Exercise 8
 #for lang1 in allLanguages:
