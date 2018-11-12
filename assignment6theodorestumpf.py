@@ -125,6 +125,8 @@ if os.path.exists('data.txt'):
    f = open('data.txt', 'r')
    allLanguages = eval(f.read())
    f.close()
+   clang = [lang for lang in allLanguages
+         if lang['name'] == 'C'][0]
 else:
    ## This line will take a while to execute, as it reads all pages for all languages
    i = 0
@@ -155,64 +157,76 @@ missingLanguages = []
 for lang in allLanguages:
    if 'influenced' in lang.keys():
       for l in lang['influenced']:
-         if not l in allLangDict.keys():
+         if not l in allLangDict.keys() and not l in missingLanguages:
             missingLanguages.append(l)
    if 'influencedBy' in lang.keys():
       for l in lang['influencedBy']:
-         if not l in allLangDict.keys():
+         if not l in allLangDict.keys() and not l in missingLanguages:
             missingLanguages.append(l)
-   ## Add your work here
 
-## If you've done this correctly, the following should return 177 languages
-print(len(missingLanguages))
-pprint(missingLanguages)
+## If you've done this correctly, the following should return 177 (194) languages
+print("Exercise 7 Test", len(missingLanguages) == 194)
+#-- pprint(missingLanguages)
 
 #################################################################
-### Exercise 8
-#for lang1 in allLanguages:
-#   for lang2 in lang1["influenced"]:
-#      pass
-#      ## Add your work here
-#      ## It should include a print statement showing the links to the languages
-#      ## that are not properly setup to point to each other.
-#   ## You may need a second for loop
-#
+## Exercise 8
+inconsistencies = []
+for lang1 in allLanguages:
+   for lang2 in lang1["influenced"]:
+      if lang2 in allLangDict.keys() and not lang1['link'] in allLangDict[lang2]['influencedBy']:
+         tup = (lang2, "should be influenced by", lang1['link'])
+         if not tup in inconsistencies:
+            inconsistencies.append(tup)
+   for lang2 in lang1["influencedBy"]:
+      if lang2 in allLangDict.keys() and not lang1['link'] in allLangDict[lang2]['influenced']:
+         tup = (lang2, "should be influence", lang1['link'])
+         if not tup in inconsistencies:
+            inconsistencies.append(tup)
+
+#  508 inconsistencies at the time of writing
+print("Exercise 7 Test", len(inconsistencies) == 508)
+
 #################################################################
 ### Exercise 9
 #
-#allParadigms = {}
-#for lang in allLanguages:
-#   pass
-#   ## Add your work here
-#
-#
-#### After you are done, the following should print the results nicely:
-#for paradigm in allParadigms:
-#   print(paradigm, ":", len(allParadigms[paradigm]))
-#   for lang in allParadigms[paradigm]:
-#      print("   " + lang["name"])
-### And the following will print simply the counts, for those paradigms with over 5 languages:
-#for paradigm in allParadigms:
-#   length = len(allParadigms[paradigm])
-#   if length >= 5:
-#      print(paradigm, ":", length)
-#
+allParadigms = {}
+for lang in allLanguages:
+   for paradigm in lang['paradigms']:
+      if paradigm in allParadigms.keys():
+         allParadigms[paradigm].append(lang)
+      else:
+         allParadigms[paradigm] = [lang]
+
+print("\nParadigms")
+### After you are done, the following should print the results nicely:
+#-- for paradigm in allParadigms:
+#--    print(paradigm, ":", len(allParadigms[paradigm]))
+#--    for lang in allParadigms[paradigm]:
+#--       print("   " + lang["name"])
+## And the following will print simply the counts, for those paradigms with over 5 languages:
+for paradigm in allParadigms:
+   length = len(allParadigms[paradigm])
+   if length >= 5:
+      print(paradigm, ":", length)
+
 #################################################################
-### Exercise 10
-#typeDisciplines = {}
-#for lang in allLanguages:
-#   pass
-#   ## Add your work here
-#
-#
-#### After you are done, the following should print the results nicely:
-#for discipline in typeDisciplines:
-#   print(discipline, ":", len(typeDisciplines[discipline]))
-#   for lang in typeDisciplines[discipline]:
-#      print("   " + lang["name"])
-### And the following will print simply the counts, for those disciplines with over 2 languages:
-#for discipline in typeDisciplines:
-#   length = len(typeDisciplines[discipline])
-#   if length >= 2:
-#      print(discipline, ":", length)
-#
+## Exercise 10
+typeDisciplines = {}
+for lang in allLanguages:
+   for typeDis in lang['typeDiscipline']:
+      if typeDis in typeDisciplines.keys():
+         typeDisciplines[typeDis].append(lang)
+      else:
+         typeDisciplines[typeDis] = [lang]
+
+print("\nType Disciplines")
+### After you are done, the following should print the results nicely:
+#-- for discipline in typeDisciplines:
+#--    print(discipline, ":", len(typeDisciplines[discipline]))
+#--    for lang in typeDisciplines[discipline]:
+#--       print("   " + lang["name"])
+## And the following will print simply the counts, for those disciplines with over 2 languages:
+for discipline in typeDisciplines:
+   length = len(typeDisciplines[discipline])
+   if length >= 2:
+      print(discipline, ":", length)
